@@ -1,6 +1,6 @@
 {
   "name": "propvw",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "SCSS Library to convert pixel units into vw",
   "main": "index.js",
   "scripts": {
