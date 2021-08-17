@@ -1,0 +1,25 @@
+{
+  "name": "propvw",
+  "version": "1.0.0",
+  "description": "SCSS Library to convert pixel units into vw",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/devthiagocaetano/propVw.git"
+  },
+  "keywords": [
+    "propvw",
+    "convert",
+    "scss",
+    "vw"
+  ],
+  "author": "Thiago Queiroz Caetano",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/devthiagocaetano/propVw/issues"
+  },
+  "homepage": "https://github.com/devthiagocaetano/propVw#readme"
+}
