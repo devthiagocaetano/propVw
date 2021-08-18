@@ -109,11 +109,19 @@ $-active-unit: null;
 }
 
 @mixin configureLayoutSize($big-desk-size: null, $desk-size: null, $tab-size: null, $mob-size: null) {
-  @debug 'configureLayoutSize #{$big-desk-size}, #{$desk-size}, #{$tab-size}, #{$mob-size}';
+  // @debug 'configureLayoutSize #{$big-desk-size}, #{$desk-size}, #{$tab-size}, #{$mob-size}';
   $-big-desk-size: $big-desk-size !global;
   $-desk-size: $desk-size !global;
   $-tab-size: $tab-size !global;
   $-mob-size: $mob-size !global;
+}
+
+@mixin configureUnitSize($big-desk-unit: null, $desk-unit: null, $tab-unit: null, $mob-unit: null) {
+  // @debug 'configureUnitSize #{$big-desk-unit}, #{$desk-unit}, #{$tab-unit}, #{$mob-unit}';
+  $-big-desk-unit: $big-desk-unit !global;
+  $-desk-unit: $desk-unit !global;
+  $-tab-unit: $tab-unit !global;
+  $-mob-unit: $mob-unit !global;
 }
 
 
