@@ -124,6 +124,17 @@ $-active-unit: null;
   $-mob-unit: $mob-unit !global;
 }
 
+@mixin configureBreakpoints($mob-min-width: null, $mob-max-width: null, $tab-min-width: null, $tab-max-width: null, $desk-min-width: null, $desk-max-width: null, $big-desk-min-width: null, $big-desk-max-width: null) {
+  $-mob-min-width: $mob-min-width !global;
+  $-mob-max-width: $mob-max-width !global;
+  $-tab-min-width: $tab-min-width !global;
+  $-tab-max-width: $tab-max-width !global;
+  $-desk-min-width: $desk-min-width !global;
+  $-desk-max-width: $desk-max-width !global;
+  $-big-desk-min-width: $big-desk-min-width !global;
+  $-big-desk-max-width: $big-desk-max-width !global;
+}
+
 
 @mixin calcVw($prop, $value1, $value2: 100%, $important: false) {
   $newSize: (($value1 / ($-mob-size / 100)) * $-mob-unit);
