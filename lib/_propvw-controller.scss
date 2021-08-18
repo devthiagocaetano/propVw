@@ -33,3 +33,12 @@
     #{$prop}: ($finalValue);
   }
 }
+
+@function convertPxVw($size: null, $context: null) {
+
+  @if $size==null and $context==null and $unit==null {
+    @error "convertPxVw needs size and context params.";
+  }
+
+  @return math.div($size, $context * 0.01) *1vw;
+}

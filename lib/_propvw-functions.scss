@@ -86,15 +86,6 @@ $-active-unit: null;
   $-active-unit: null !global;
 }
 
-@function convert($size: null, $context: null) {
-
-  @if $size==null and $context==null and $unit==null {
-    @error "convert needs size and context params.";
-  }
-
-  @return math.div($size, $context * 0.01) *1vw;
-}
-
 @mixin calc($prop, $value1, $value2: 100%, $important: false) {
   $newSize: (($value1 / ($-mob-size / 100)) * $-mob-unit);
 
