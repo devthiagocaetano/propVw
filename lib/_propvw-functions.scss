@@ -1,16 +1,14 @@
 @use "sass:list";
 @use "sass:math";
 @use 'propvw-controller'as controller;
-// @use './breakpoints'as breakpoint;
-/* --- usado no calculo pxToVw() --- */
-$-big-desk-size: 1920 !default; //SÓ DEVE SER USADO EM CASO DE 2 LAYOUTS DESKTOP
-$-desk-size: 1366 !default; //PADRÃO PRA DESKTOP
+
+$-big-desk-size: 1920 !default;
+$-desk-size: 1366 !default;
 $-tab-size: 768 !default;
 $-mob-size: 375 !default;
 
-/* --- usado no calculo pxToVw() --- */
-$-big-desk-unit: 1px !default; //SÓ DEVE SER USADO EM CASO DE 2 LAYOUTS DESKTOP
-$-desk-unit: 1vw !default; //PADRÃO PRA DESKTOP
+$-big-desk-unit: 1px !default;
+$-desk-unit: 1vw !default;
 $-tab-unit: 1vw !default;
 $-mob-unit: 1vw !default;
 
@@ -23,7 +21,7 @@ $-desk-max-width: 1919px !default;
 $-big-desk-min-width: 1920px !default;
 $-big-desk-max-width: null !default;
 
-$-condMap: ("mobile": "(max-width: #{$-mob-max-width})",
+$-breakpoints: ("mobile": "(max-width: #{$-mob-max-width})",
   "tablet": "(min-width: #{$-tab-min-width}) and (max-width: #{$-tab-max-width})",
   "desktop": "(min-width: #{$-desk-min-width})",
   "small_desktop": "(min-width: #{$-desk-min-width}) and (max-width: #{$-desk-max-width})",
@@ -38,7 +36,6 @@ $-active-unit: null;
 
 
 @mixin media($args...) {
-  // @warn 'chamou media #{$args}';
   $query: "";
 
   @each $arg in $args {
@@ -48,7 +45,7 @@ $-active-unit: null;
       $separator: " and ";
     }
 
-    $query: getBreakpoint($arg);
+    $query: controller.getBreakpoint($-breakpoints, $arg);
     @include setActiveContext($arg);
 
     @media #{$query} {
@@ -59,38 +56,28 @@ $-active-unit: null;
 }
 
 @mixin style($prop: null, $value: null, $elem: &) {
-  // @debug "TESTANDO #{$prop} #{$value} #{$elem}";
 
   @if $prop==null and $value==null {
     @error "faltam valores na funcao testando;";
   }
 
   @if $-active-context and $-active-unit {
-    //AQUI PROVAVELMENTE TA VINDO DENTRO DE UM BREKPOINT QUE JA SETOU ACTIVE
-    // @debug 'TEM ACTIVE #{$-active-context} E #{$-active-unit}';
-    @include writeProp($prop, $value, $-active-context, $-active-unit);
+    @include controller.writeProp($prop, $value, $-active-context, $-active-unit);
   }
 
   @else if $-mobile-first {
-    // @debug 'PEGOU MOBILE FIRST #{$-mobile-first}';
-    @include writeProp($prop, $value, $-mob-size, $-mob-unit);
+    @include controller.writeProp($prop, $value, $-mob-size, $-mob-unit);
   }
 
   @else if $-desk-unit==$-big-desk-unit {
-    // @debug 'UNIDADES IGUAIS';
-    @include writeProp($prop, $value, $-big-desk-size, $-big-desk-unit);
-    // @include writeProp($prop, $value, $-desk-size, $-desk-unit);
+    @include controller.writeProp($prop, $value, $-big-desk-size, $-big-desk-unit);
   }
 
   @else {
-    // @debug 'UNIDADES DIFERENTES';
-    @include writeProp($prop, $value, $-big-desk-size, $-big-desk-unit);
-    // @include writeProp($prop, $value, $-desk-size, $-desk-unit);
+    @include controller.writeProp($prop, $value, $-big-desk-size, $-big-desk-unit);
 
     @include media('small_desktop') {
-      // @include media('big_desktop') {
-      @include writeProp($prop, $value, $-desk-size, $-desk-unit);
-      // @include writeProp($prop, $value, $-big-desk-size, $-big-desk-unit);
+      @include controller.writeProp($prop, $value, $-desk-size, $-desk-unit);
     }
 
   }
@@ -102,41 +89,13 @@ $-active-unit: null;
 @function convert($size: null, $context: null) {
 
   @if $size==null and $context==null and $unit==null {
-    @error "faltam valores na funcao pxvw;";
+    @error "convert needs size and context params.";
   }
 
   @return math.div($size, $context * 0.01) *1vw;
 }
 
-@mixin configureLayoutSize($big-desk-size: null, $desk-size: null, $tab-size: null, $mob-size: null) {
-  // @debug 'configureLayoutSize #{$big-desk-size}, #{$desk-size}, #{$tab-size}, #{$mob-size}';
-  $-big-desk-size: $big-desk-size !global;
-  $-desk-size: $desk-size !global;
-  $-tab-size: $tab-size !global;
-  $-mob-size: $mob-size !global;
-}
-
-@mixin configureUnitSize($big-desk-unit: null, $desk-unit: null, $tab-unit: null, $mob-unit: null) {
-  // @debug 'configureUnitSize #{$big-desk-unit}, #{$desk-unit}, #{$tab-unit}, #{$mob-unit}';
-  $-big-desk-unit: $big-desk-unit !global;
-  $-desk-unit: $desk-unit !global;
-  $-tab-unit: $tab-unit !global;
-  $-mob-unit: $mob-unit !global;
-}
-
-@mixin configureBreakpoints($mob-min-width: null, $mob-max-width: null, $tab-min-width: null, $tab-max-width: null, $desk-min-width: null, $desk-max-width: null, $big-desk-min-width: null, $big-desk-max-width: null) {
-  $-mob-min-width: $mob-min-width !global;
-  $-mob-max-width: $mob-max-width !global;
-  $-tab-min-width: $tab-min-width !global;
-  $-tab-max-width: $tab-max-width !global;
-  $-desk-min-width: $desk-min-width !global;
-  $-desk-max-width: $desk-max-width !global;
-  $-big-desk-min-width: $big-desk-min-width !global;
-  $-big-desk-max-width: $big-desk-max-width !global;
-}
-
-
-@mixin calcVw($prop, $value1, $value2: 100%, $important: false) {
+@mixin calc($prop, $value1, $value2: 100%, $important: false) {
   $newSize: (($value1 / ($-mob-size / 100)) * $-mob-unit);
 
   @if $important {
@@ -186,4 +145,66 @@ $-active-unit: null;
     }
   }
 
+}
+
+@mixin configureLayoutSize($big-desk-size: null, $desk-size: null, $tab-size: null, $mob-size: null) {
+  $-big-desk-size: $big-desk-size !global;
+  $-desk-size: $desk-size !global;
+  $-tab-size: $tab-size !global;
+  $-mob-size: $mob-size !global;
+}
+
+@mixin configureUnitSize($big-desk-unit: null, $desk-unit: null, $tab-unit: null, $mob-unit: null) {
+  $-big-desk-unit: $big-desk-unit !global;
+  $-desk-unit: $desk-unit !global;
+  $-tab-unit: $tab-unit !global;
+  $-mob-unit: $mob-unit !global;
+}
+
+@mixin configureBreakpoints($mob-min-width: null, $mob-max-width: null, $tab-min-width: null, $tab-max-width: null, $desk-min-width: null, $desk-max-width: null, $big-desk-min-width: null, $big-desk-max-width: null) {
+  $-mob-min-width: $mob-min-width !global;
+  $-mob-max-width: $mob-max-width !global;
+  $-tab-min-width: $tab-min-width !global;
+  $-tab-max-width: $tab-max-width !global;
+  $-desk-min-width: $desk-min-width !global;
+  $-desk-max-width: $desk-max-width !global;
+  $-big-desk-min-width: $big-desk-min-width !global;
+  $-big-desk-max-width: $big-desk-max-width !global;
+}
+
+// HIDDEN FUNCTIONS ON FORWARD
+@mixin setActiveContext($breakpoint: null) {
+  @if $breakpoint==null {
+    @error 'setActiveContext need breakpoint parameter.';
+  }
+
+  @if $breakpoint=='mobile' {
+    $-active-context: $-mob-size !global;
+    $-active-unit: $-mob-unit !global;
+  }
+
+  @else if $breakpoint=='tablet' {
+    $-active-context: $-tab-size !global;
+    $-active-unit: $-tab-unit !global;
+  }
+
+  @else if $breakpoint=='desktop'or $breakpoint=='small_desktop' {
+    $-active-context: $-desk-size !global;
+    $-active-unit: $-desk-unit !global;
+  }
+
+  @else if $breakpoint=='big_desktop' {
+    $-active-context: $-big-desk-size !global;
+    $-active-unit: $-big-desk-unit !global;
+  }
+
+  @else if $-mobile-first {
+    $-active-context: $-mob-size !global;
+    $-active-unit: $-mob-unit !global;
+  }
+
+  @else {
+    $-active-context: $-big-desk-size !global;
+    $-active-unit: $-big-desk-unit !global;
+  }
 }

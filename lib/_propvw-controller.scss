@@ -1,105 +1,11 @@
 @use "sass:list";
 @use "sass:math";
-// @use './breakpoints'as breakpoint;
-/* --- usado no calculo pxToVw() --- */
-$-big-desk-size: 1920 !default; //SÓ DEVE SER USADO EM CASO DE 2 LAYOUTS DESKTOP
-$-desk-size: 1366 !default; //PADRÃO PRA DESKTOP
-$-tab-size: 768 !default;
-$-mob-size: 375 !default;
 
-/* --- usado no calculo pxToVw() --- */
-$-big-desk-unit: 1px !default; //SÓ DEVE SER USADO EM CASO DE 2 LAYOUTS DESKTOP
-$-desk-unit: 1vw !default; //PADRÃO PRA DESKTOP
-$-tab-unit: 1vw !default;
-$-mob-unit: 1vw !default;
-
-$-mob-min-width: null !default;
-$-mob-max-width: 640px !default;
-$-tab-min-width: 641px !default;
-$-tab-max-width: 1280px !default;
-$-desk-min-width: 1281px !default;
-$-desk-max-width: 1919px !default;
-$-big-desk-min-width: 1920px !default;
-$-big-desk-max-width: null !default;
-
-$-condMap: ("mobile": "(max-width: #{$-mob-max-width})",
-  "tablet": "(min-width: #{$-tab-min-width}) and (max-width: #{$-tab-max-width})",
-  "desktop": "(min-width: #{$-desk-min-width})",
-  "small_desktop": "(min-width: #{$-desk-min-width}) and (max-width: #{$-desk-max-width})",
-  "big_desktop": "(min-width: #{$-big-desk-min-width})",
-  "only_screen": "only screen",
-  "only_print": "only print",
-);
-
-$-mobile-first: false !default;
-$-active-context: null;
-$-active-unit: null;
-
-@function getBreakpoint($condition) {
-  @return map-get($-condMap, $condition);
-}
-
-@mixin media($args...) {
-  // @warn 'chamou media #{$args}';
-  $query: "";
-
-  @each $arg in $args {
-    $separator: "";
-
-    @if ($query !="") {
-      $separator: " and ";
-    }
-
-    $query: getBreakpoint($arg);
-    @include setActiveContext($arg);
-
-    @media #{$query} {
-      @content;
-    }
-  }
-
-}
-
-@mixin setActiveContext($breakpoint: null) {
-  // @warn 'chamou setActiveContext';
-
-  @if $breakpoint==null {
-    @error 'setActiveContext precisa de um parâmetro.';
-  }
-
-  @if $breakpoint=='mobile' {
-    $-active-context: $-mob-size !global;
-    $-active-unit: $-mob-unit !global;
-  }
-
-  @else if $breakpoint=='tablet' {
-    $-active-context: $-tab-size !global;
-    $-active-unit: $-tab-unit !global;
-  }
-
-  @else if $breakpoint=='desktop'or $breakpoint=='small_desktop' {
-    $-active-context: $-desk-size !global;
-    $-active-unit: $-desk-unit !global;
-  }
-
-  @else if $breakpoint=='big_desktop' {
-    $-active-context: $-big-desk-size !global;
-    $-active-unit: $-big-desk-unit !global;
-  }
-
-  @else if $-mobile-first {
-    $-active-context: $-mob-size !global;
-    $-active-unit: $-mob-unit !global;
-  }
-
-  @else {
-    $-active-context: $-desk-size !global;
-    $-active-unit: $-desk-unit !global;
-  }
+@function getBreakpoint($list, $condition) {
+  @return map-get($list, $condition);
 }
 
 @mixin writeProp($prop: null, $value: null, $context: null, $unit: null) {
-  // @warn 'CHAMOUT WRITE PROP #{$prop} #{$value} #{$context} #{$unit}';
 
   @if list.length($value)==1 {
     @if $unit==1vw {
@@ -112,7 +18,6 @@ $-active-unit: null;
   }
 
   @else {
-    // @debug 'TEM VALORES MULTIPLOS #{$value}';
     $finalValue: null;
 
     @each $val in $value {
@@ -125,118 +30,6 @@ $-active-unit: null;
       }
     }
 
-    // @debug 'FINALIZOU #{$finalValue}';
     #{$prop}: ($finalValue);
   }
-}
-
-@mixin style($prop: null, $value: null, $elem: &) {
-  // @debug "TESTANDO #{$prop} #{$value} #{$elem}";
-
-  @if $prop==null and $value==null {
-    @error "faltam valores na funcao testando;";
-  }
-
-  @if $-active-context and $-active-unit {
-    //AQUI PROVAVELMENTE TA VINDO DENTRO DE UM BREKPOINT QUE JA SETOU ACTIVE
-    // @debug 'TEM ACTIVE #{$-active-context} E #{$-active-unit}';
-    @include writeProp($prop, $value, $-active-context, $-active-unit);
-  }
-
-  @else if $-mobile-first {
-    // @debug 'PEGOU MOBILE FIRST #{$-mobile-first}';
-    @include writeProp($prop, $value, $-mob-size, $-mob-unit);
-  }
-
-  @else if $-desk-unit==$-big-desk-unit {
-    // @debug 'UNIDADES IGUAIS';
-    @include writeProp($prop, $value, $-big-desk-size, $-big-desk-unit);
-    // @include writeProp($prop, $value, $-desk-size, $-desk-unit);
-  }
-
-  @else {
-    // @debug 'UNIDADES DIFERENTES';
-    @include writeProp($prop, $value, $-big-desk-size, $-big-desk-unit);
-    // @include writeProp($prop, $value, $-desk-size, $-desk-unit);
-
-    @include media('small_desktop') {
-      // @include media('big_desktop') {
-      @include writeProp($prop, $value, $-desk-size, $-desk-unit);
-      // @include writeProp($prop, $value, $-big-desk-size, $-big-desk-unit);
-    }
-
-  }
-
-  $-active-context: null !global;
-  $-active-unit: null !global;
-}
-
-@function convert($size: null, $context: null) {
-
-  @if $size==null and $context==null and $unit==null {
-    @error "faltam valores na funcao pxvw;";
-  }
-
-  @return math.div($size, $context * 0.01) *1vw;
-}
-
-@mixin configureLayoutSize($big-desk-size: null, $desk-size: null, $tab-size: null, $mob-size: null) {
-  @debug 'configureLayoutSize #{$big-desk-size}, #{$desk-size}, #{$tab-size}, #{$mob-size}';
-  $-big-desk-size: $big-desk-size !global;
-  $-desk-size: $desk-size !global;
-  $-tab-size: $tab-size !global;
-  $-mob-size: $mob-size !global;
-}
-
-
-@mixin calcVw($prop, $value1, $value2: 100%, $important: false) {
-  $newSize: (($value1 / ($-mob-size / 100)) * $-mob-unit);
-
-  @if $important {
-    #{$prop}: calc(#{$value2} - #{$newSize}) !important;
-  }
-
-  @else {
-    #{$prop}: calc(#{$value2} - #{$newSize});
-  }
-
-  @include breakpoint.tablet {
-    $newSize: (($value1 / ($-tab-size / 100)) * $-tab-unit);
-
-    @if $important {
-      #{$prop}: calc(#{$value2} - #{$newSize}) !important;
-
-    }
-
-    @else {
-      #{$prop}: calc(#{$value2} - #{$newSize});
-    }
-  }
-
-  @include breakpoint.desktop {
-    $newSize: (($value1 / ($-desk-size / 100)) * $-desk-unit);
-
-    @if $important {
-      #{$prop}: calc(#{$value2} - #{$newSize}) !important;
-
-    }
-
-    @else {
-      #{$prop}: calc(#{$value2} - #{$newSize});
-    }
-  }
-
-  @include breakpoint.big-desktop {
-    $newSize: (($value1 / ($-big-desk-size / 100)) * $-big-desk-unit);
-
-    @if $important {
-      #{$prop}: calc(#{$value2} - #{$newSize}) !important;
-
-    }
-
-    @else {
-      #{$prop}: calc(#{$value2} - #{$newSize});
-    }
-  }
-
 }
