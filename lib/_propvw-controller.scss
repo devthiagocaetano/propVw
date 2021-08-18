@@ -34,16 +34,6 @@ $-condMap: ("mobile": "(max-width: #{$-mob-max-width})",
 $-mobile-first: false !default;
 $-active-context: null;
 $-active-unit: null;
-$thiago: null;
-$-thiago2: null;
-
-@mixin configureLayoutSize($big-desk-size: null, $desk-size: null, $tab-size: null, $mob-size: null) {
-  @debug 'configureLayoutSize #{$big-desk-size}, #{$desk-size}, #{$tab-size}, #{$mob-size}';
-  $-big-desk-size: $big-desk-size !global;
-  $-desk-size: $desk-size !global;
-  $-tab-size: $tab-size !global;
-  $-mob-size: $mob-size !global;
-}
 
 @function getBreakpoint($condition) {
   @return map-get($-condMap, $condition);
@@ -140,17 +130,7 @@ $-thiago2: null;
   }
 }
 
-@function checkActiveContext() {
-  // @warn 'CHAMOUT CHECK CONTEXT';
-  @return $-active-context !=null;
-}
-
-@function checkActiveUnit() {
-  // @warn 'CHAMOUT CHECK UNIT';
-  @return $-active-unit !=null;
-}
-
-@mixin testando($prop: null, $value: null, $elem: &) {
+@mixin style($prop: null, $value: null, $elem: &) {
   // @debug "TESTANDO #{$prop} #{$value} #{$elem}";
 
   @if $prop==null and $value==null {
@@ -191,7 +171,7 @@ $-thiago2: null;
   $-active-unit: null !global;
 }
 
-@function convertPxVw($size: null, $context: null) {
+@function convert($size: null, $context: null) {
 
   @if $size==null and $context==null and $unit==null {
     @error "faltam valores na funcao pxvw;";
@@ -200,113 +180,14 @@ $-thiago2: null;
   @return math.div($size, $context * 0.01) *1vw;
 }
 
-@function pxvw($size: null, $context: null, $unit: null, $elem: &) {
-  // @warn 'passando #{$elem}';
-
-  @if $size==null and $context==null and $unit==null {
-    @error "faltam valores na funcao pxvw;";
-  }
-
-  @if $context==null {
-    @if $-active-context {
-      $context: $-active-context;
-    }
-
-    @else {
-      $context: $-desk-size;
-    }
-  }
-
-  //se as unidades de desk e big desk forem diferentes, eu mudo a parada
-
-  @if $unit==null {
-    @if $-active-unit {
-      $unit: $-active-unit;
-    }
-
-    @else {
-      $unit: $-desk-unit;
-    }
-
-    @if($-desk-unit==1vw and $-big-desk-unit==1px) {
-      //vou converter e escrever só o desk
-      // setActiveContext();
-    }
-  }
-
-  @if $unit==1vw {
-    $newSize: $size / ($context * 0.01) * $unit;
-  }
-
-  @else {
-    $newSize: $size * $unit;
-  }
-
-
-  @return $newSize;
+@mixin configureLayoutSize($big-desk-size: null, $desk-size: null, $tab-size: null, $mob-size: null) {
+  @debug 'configureLayoutSize #{$big-desk-size}, #{$desk-size}, #{$tab-size}, #{$mob-size}';
+  $-big-desk-size: $big-desk-size !global;
+  $-desk-size: $desk-size !global;
+  $-tab-size: $tab-size !global;
+  $-mob-size: $mob-size !global;
 }
 
-// @function pxvw($size, $context) {
-//   @if $size and $context {
-//     @return $size / ($context * 0.01) * 1vw;
-//   }
-
-//   @else {
-//     @error "faltam valores na funcao;";
-//   }
-// }
-
-@mixin propVw($prop, $value, $important: false) {
-  // $newSize: (($value / ($-mob-size / 100)) * $-mob-unit);
-
-  // @if $important {
-  //   #{$prop}: $newSize !important;
-  // }
-
-  // @else {
-  //   #{$prop}: $newSize;
-  // }
-
-  // @include breakpoint.tablet {
-  //   $newSize: (($value / ($-tab-size / 100)) * $-tab-unit);
-
-  //   @if $important {
-  //     #{$prop}: $newSize !important;
-
-  //   }
-
-  //   @else {
-  //     #{$prop}: $newSize;
-  //   }
-  // }
-
-  // @include breakpoint.desktop {
-  //   $newSize: (($value / ($-desk-size / 100)) * $-desk-unit);
-
-  //   @if $important {
-  //     #{$prop}: $newSize !important;
-
-  //   }
-
-  //   @else {
-  //     #{$prop}: $newSize;
-  //   }
-  // }
-
-  // @include breakpoint.big-desktop {
-  //   $newSize: (($value / ($-big-desk-size / 100)) * $-big-desk-unit);
-
-  //   @if $important {
-  //     #{$prop}: $newSize !important;
-
-  //   }
-
-  //   @else {
-  //     #{$prop}: $newSize;
-  //   }
-  // }
-
-}
 
 @mixin calcVw($prop, $value1, $value2: 100%, $important: false) {
   $newSize: (($value1 / ($-mob-size / 100)) * $-mob-unit);
