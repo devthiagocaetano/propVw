@@ -1,4 +1,5 @@
 @use "sass:list";
+@use "sass:color";
 @use "sass:math";
 @use "sass:string";
 
@@ -6,33 +7,56 @@
   @return map-get($list, $condition);
 }
 
-@mixin writeProp($prop: null, $value: null, $context: null, $unit: null) {
+@mixin writeProp($prop: null, $value: null, $context: null, $unit: null, $important: null) {
+  $finalValue: null;
+  $ignoredValues: (auto, initial, inherit);
 
-  @if list.length($value)==1 {
-    @if $unit==1vw {
-      #{$prop}: (convertPxVw($value, $context));
+  @each $val in $value {
+
+    @if index($ignoredValues, $val) {
+      $finalValue: $val;
+    }
+
+    @else if $unit==1vw {
+      $finalValue: append($finalValue, convertPxVw($val, $context));
     }
 
     @else {
-      #{$prop}: ($value * 1px);
+      $finalValue: append($finalValue, $val * 1px);
     }
   }
 
-  @else {
-    $finalValue: null;
+  @if $important {
+    $finalValue: append($finalValue,  !important);
+  }
 
-    @each $val in $value {
-      @if $unit==1vw {
-        $finalValue: list.append($finalValue, convertPxVw($val, $context));
-      }
+  #{$prop}: $finalValue;
+}
 
-      @else {
-        $finalValue: list.append($finalValue, $val * 1px);
-      }
+@mixin writeFunction($function: null, $prop: null, $value: null, $context: null, $unit: null, $important: null) {
+  $finalValue: null;
+  $ignoredValues: (auto, initial, inherit);
+
+  @each $val in $value {
+
+    @if index($ignoredValues, $val) {
+      $finalValue: $val;
     }
 
-    #{$prop}: ($finalValue);
+    @else if $unit==1vw {
+      $finalValue: append($finalValue, convertPxVw($val, $context));
+    }
+
+    @else {
+      $finalValue: append($finalValue, $val * 1px);
+    }
   }
+
+  @if $important {
+    $finalValue: append($finalValue,  !important);
+  }
+
+  #{$function}: #{$prop}($finalValue);
 }
 
 @function convertPxVw($size: null, $context: null) {
@@ -41,43 +65,304 @@
     @error "convertPxVw needs size and context params.";
   }
 
-  @return math.div($size, $context * 0.01) *1vw;
+  @return math.div($size, $context * 0.01) * 1vw;
+}
+
+@function convertFull($size: null, $context: null) {
+
+  @if $size==null and $context==null and $unit==null {
+    @error "convertPxVw needs size and context params.";
+  }
+
+  @return math.div($size, $context) * 1vw;
 }
 
 @function countTerm($string, $term: 'fill:') {
-  $-position: string.index($string, $term);
-  $-term-length: string.length($term);
-  $-term-length: $term-length -1;
+  // @debug 'countTerm disparado';
+  $-position: str-index($string, $term);
+  $-term-length: str-length($term);
+  $-term-length: $-term-length - 1;
   $-count: 0;
 
   @while $-position !=null {
-    $string: string.slice($string, ($-position + $term-length));
-    $-position: string.index($string, $term);
+    $string: str-slice($string, ($-position + $-term-length));
+    $-position: str-index($string, $term);
     $-count: $-count + 1;
   }
 
   @return $-count;
 }
 
-@function applyDefaultColors($string, $query: 'fill') {
+@function checkStringType($string) {
+  @if str-index($string, '#') {
+    @return 'hexa';
+  }
+
+  @if str-index($string, 'rgba') {
+    @return 'rgba';
+  }
+
+  @if str-index($string, 'rgb') {
+    @return 'rgb';
+  }
+
+  @if str-index($string, 'hsl') {
+    @return 'hsl';
+  }
+
+  @return null;
+}
+
+@function convertHexaStringToRgb($string) {
+  // @debug 'convertHexaStringToRgb disparado #{$string}';
+
+  @if str-index($string, '#') {
+    $string: str-slice($string, 2);
+  }
+
+  @if str-length($string)==3 {
+    $-full-color: null;
+
+    @for $i from 1 through str-length($string) {
+      $-character: str-slice($string, $i, $i);
+      $-full-color: $-full-color+$-character+$-character;
+    }
+
+    $string: $-full-color;
+  }
+
+  @if str-length($string)>6 {
+    @error 'Hexadecimal colors longer than 6 characters are not supported. (##{$string})';
+  }
+
+  $-hexa-char-list: 'a''b''c''d''e''f';
+  $-hexa-value-list: 10 11 12 13 14 15;
+  $-numbers-char-list: '0''1''2''3''4''5''6''7''8''9';
+  $-numbers-value-list: 0 1 2 3 4 5 6 7 8 9;
+  $-converted-numbers: ();
+
+  // Looping through all characters
+  @for $i from 1 through str-length($string) {
+    $-character: str-slice($string, $i, $i);
+    $-character: to-lower-case($-character);
+    $-letter-index: index($-hexa-char-list, $-character);
+    $-number-index: index($-numbers-char-list, $-character);
+    $-number: 0;
+
+    @if $-letter-index {
+      $-number: nth($-hexa-value-list, $-letter-index);
+    }
+
+    @else {
+      $-number: nth($-numbers-value-list, $-number-index);
+    }
+
+    @if $i==1 or $i==3 or $i==5 {
+      $-number: $-number * 16;
+    }
+
+    @else {
+      $-number: $-number * 1;
+    }
+
+    $-converted-numbers : append($-converted-numbers, $-number)
+  }
+
+
+  $-red: nth($-converted-numbers, 1)+nth($-converted-numbers, 2);
+  $-green: nth($-converted-numbers, 3)+nth($-converted-numbers, 4);
+  $-blue: nth($-converted-numbers, 5)+nth($-converted-numbers, 6);
+  $-rgb: 'rgb(#{$-red}, #{$-green}, #{$-blue})';
+
+  @return $-rgb;
+}
+
+@function convertColors($string, $query: 'fill:') {
+  // @debug 'convertColor disparado #{$string}';
+
   $-query: $query;
   $-query-length: string.length($-query);
-  $-query-length: $-query-length -1;
+  $-query-length: $-query-length;
+  $-actual-color-index: string.index($string, $-query);
+  $-final-string: null;
+
+  @while $-actual-color-index !=null {
+    //pega o index de onde começa a cor
+    $-color-index-init: str-index($string, $-query) + $-query-length;
+    //pega a string que tem até o estilo daquela cor
+    //pra adicionar na string final
+    //PRECISA DESSE -1 PQ O LENGTH TA CERTO, MAS O SASS NÃO COMEÇA NO 0
+    // $-string-before: string.slice($string, 1, $-color-index-init);
+    $-string-before: string.slice($string, 1, $-color-index-init - 1);
+
+    // @error $-string-before;
+
+    //pra saber onde a cor acaba
+    //pega o resto da string depois da declaração de cor
+    $-string-after: string.slice($string, $-color-index-init);
+    //procura pelo fechamento aquele PATH no html
+    $-color-index-final: str-index($-string-after, '/>');
+    //atualiza a string que vem depois da cor pro index do final da cor
+    //PRECISA DESSE -1 PQ O  SASS NÃO COMEÇA NO 0
+    $-string-after: string.slice($-string-after, $-color-index-final - 1);
+    //pega a cor baseado nos index construídos anteriormente
+    $-current-color: str-slice($string, $-color-index-init, $-color-index-init + $-color-index-final - 3);
+    $-current-color-type: checkStringType($-current-color);
+
+    //se for hexadecimal precio converter pra rgb 
+    @if $-current-color-type=='hexa' {
+      $-current-color: convertHexaStringToRgb($-current-color);
+    }
+
+    //seta a string como o resto pra quando voltar no while, bater no primeiro IF se encontrar mais uma cor
+    $string: $-string-after;
+    //adiciona a string que vem antes da cor junto com a cor atualizada na string final do icone
+    //sempre vai ser a string before, pq na linha de cima sempre atualizamos a string base
+    $-final-string: $-final-string+$-string-before+$-current-color;
+    //passa o index da próxima cor baseada na string (que foi atualizada) como cor atual
+    //caso não encontre, é aqui que vai fazer o final do while
+    $-actual-color-index: str-index($string, $-query);
+  }
+
+  $-final-string: $-final-string+$string;
+  @return $-final-string;
+}
+
+@function applyDefaultColors($string, $query: 'fill:') {
+  // @debug 'applyDefaultColors disparado #{$string}';
+
+  $-query: $query;
+  $-query-length: string.length($-query);
+  $-query-length: $-query-length - 1;
   $-actual-color: getIndex($string, $-query);
   $-final-string: null;
 
   @while $-actual-color !=null {
-    $-color-index-init: (string.index($string, $-query) + 4);
-    $-string-before: string.slice($string, 1, $-color-index-init);
-    $-string-after: string.slice($string, $-color-index-init);
-    $-color-index-final: (string.index($-string-after, '/>') - 1);
-    $-string-after: string.slice($-string-after, $-color-index-final);
 
-    $string: $-string-after;
-    $-final-string: $-final-string+$-string-before+'rgb(0,0,0)';
-    $-actual-color: getIndex($string, $-query);
+    @if string.index($string, $-query) {
+      $-color-index-init: string.index($string, $-query) + $-query-length;
+      $-string-before: string.slice($string, 1, $-color-index-init);
+      $-string-after: string.slice($string, $-color-index-init);
+      $-color-index-final: (string.index($-string-after, '/>') - 1);
+      $-string-after: string.slice($-string-after, $-color-index-final);
+
+      $string: $-string-after;
+      $-final-string: $-final-string+$-string-before+'rgb(0,0,0)';
+      $-actual-color: getIndex($string, $-query);
+    }
+
+    @else {
+      $-final-string: $-final-string+$string;
+      $-actual-color: null;
+    }
   }
 
-  $-final-string: $-final-string+'"/>';
+  @return $-final-string;
+}
+
+// @function applyCustomColors($string, $colors, $query: 'fill:') {
+//   // @debug 'applyCustomColors disparado';
+
+//   $-query: $query;
+//   $-query-length: string.length($-query);
+//   $-query-length: $-query-length - 1;
+//   $-actual-color: getIndex($string, $-query);
+//   $-final-list: ();
+//   $-final-colors: ();
+//   $-final-string: null;
+//   $-color-count: countTerm($string, $-query);
+//   $-active-index: 0;
+
+//   @each $color in $colors {
+//     $-green: color.green($color);
+//     $-red: color.red($color);
+//     $-blue: color.blue($color);
+//     $-final-colors: append($-final-colors, 'rgb(#{$-red}, #{$-green}, #{$-blue})');
+//   }
+
+// @while $-actual-color !=null {
+
+//   @if string.index($string, $-query) {
+//     $-color-index-init: string.index($string, $-query) + $-query-length;
+//     $-string-before: string.slice($string, 1, $-color-index-init);
+//     $-string-after: string.slice($string, $-color-index-init);
+//     $-color-index-final: (string.index($-string-after, '/>') - 1);
+//     $-string-after: string.slice($-string-after, $-color-index-final);
+
+//     $string: $-string-after;
+//     $-final-list: append($-final-list, $-string-before);
+//     $-actual-color: getIndex($string, $-query);
+//     $-active-index: $-active-index + 1;
+//   }
+
+//   @else {
+//     $-actual-color: null;
+//   }
+// }
+
+//   $-combined: list.join($-final-list, $-final-colors);
+
+//   @return $-final-list;
+// }
+@function applyCustomColors($string, $colors, $query: 'fill:') {
+  // @debug 'applyCustomColors disparado #{$string}';
+
+  // $-query: $query;
+  // $-query-length: str-length($-query) - 1;
+  // $-actual-color: str-index($string, $-query);
+  // $-final-list: ();
+  // $-final-string: null;
+  // $-color-count: countTerm($string, $-query);
+  $-active-index: 1;
+  $-final-colors: ();
+
+  @each $color in $colors {
+    $-green: green($color);
+    $-red: red($color);
+    $-blue: blue($color);
+    $-final-colors: append($-final-colors, 'rgb(#{$-red}, #{$-green}, #{$-blue})');
+  }
+
+  $-query: $query;
+  $-query-length: string.length($-query);
+  $-actual-color-index: string.index($string, $-query);
+  $-final-string: null;
+
+  @while $-actual-color-index !=null {
+    //pega o index de onde começa a cor
+    $-color-index-init: str-index($string, $-query) + $-query-length;
+    //pega a string que tem até o estilo daquela cor
+    //pra adicionar na string final
+    //PRECISA DESSE -1 PQ O LENGTH TA CERTO, MAS O SASS NÃO COMEÇA NO 0
+    // $-string-before: string.slice($string, 1, $-color-index-init);
+    $-string-before: string.slice($string, 1, $-color-index-init - 1);
+
+    // @error $-string-before;
+
+    //pra saber onde a cor acaba
+    //pega o resto da string depois da declaração de cor
+    $-string-after: string.slice($string, $-color-index-init);
+    //procura pelo fechamento aquele PATH no html
+    $-color-index-final: str-index($-string-after, '/>');
+    //atualiza a string que vem depois da cor pro index do final da cor
+    //PRECISA DESSE -1 PQ O  SASS NÃO COMEÇA NO 0
+    $-string-after: string.slice($-string-after, $-color-index-final - 1);
+    //pega a cor baseado nos index construídos anteriormente
+    $-current-color: nth($-final-colors, $-active-index);
+
+
+    //atualiza o index pra poder pegar a próxima cor
+    $-active-index: $-active-index + 1;
+    //seta a string como o resto pra quando voltar no while, bater no primeiro IF se encontrar mais uma cor
+    $string: $-string-after;
+    //adiciona a string que vem antes da cor junto com a cor atualizada na string final do icone
+    //sempre vai ser a string before, pq na linha de cima sempre atualizamos a string base
+    $-final-string: $-final-string+$-string-before+$-current-color;
+    //passa o index da próxima cor baseada na string (que foi atualizada) como cor atual
+    //caso não encontre, é aqui que vai fazer o final do while
+    $-actual-color-index: str-index($string, $-query);
+  }
+
+  $-final-string: $-final-string+$string;
   @return $-final-string;
 }

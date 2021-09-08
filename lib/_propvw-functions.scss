@@ -35,6 +35,9 @@ $-debugger: false !default;
 $-active-context: null;
 $-active-unit: null;
 
+@function is-number($value) {
+  @return type-of($value)=='number';
+}
 
 @mixin media($args...) {
   $query: "";
@@ -49,42 +52,115 @@ $-active-unit: null;
     $query: controller.getBreakpoint($-breakpoints, $arg);
     @include setActiveContext($arg);
 
+
     @media #{$query} {
       @content;
     }
   }
 
+  $-active-context: null !global;
+  $-active-unit: null !global;
 }
 
-@mixin style($prop: null, $value: null, $elem: &) {
+@function minmax($values...) {
+  @if length($values)>2 {
+    @error 'This function must receive 2 parameters';
+  }
 
-  @if $prop==null and $value==null {
+  $string: null;
+  $finalValues: ();
+
+  @each $var in $values {
+    $-curr-context: null;
+
+    @if not is-number($var) {
+      // @debug 'not number #{$var} ';
+      // TEM QUE EXISTIR MESMO VAZIO PRA IMPEDIR QUE CAIA NOS OUTROS CENARIOS E
+      // FAÇA CONVERSAO DE VALORES QUE NÃO SÃO PX
+    }
+
+    @else if unit($var) !='px' {
+      // @debug 'diferente #{$var} #{unit($var)}';
+      // TEM QUE EXISTIR MESMO VAZIO PRA IMPEDIR QUE CAIA NOS OUTROS CENARIOS E
+      // FAÇA CONVERSAO DE VALORES QUE NÃO SÃO PX
+    }
+
+    @else if unitless($var) {
+      // @debug 'unitless #{$var} #{unit($var)}';
+      // TEM QUE EXISTIR MESMO VAZIO PRA IMPEDIR QUE CAIA NOS OUTROS CENARIOS E
+      // FAÇA CONVERSAO DE VALORES QUE NÃO SÃO PX
+    }
+
+    @else if $-active-context {
+      @if $-active-unit==1vw {
+        $-curr-context: $-active-context * 0.01px;
+        $var: controller.convertFull($var, $-curr-context);
+      }
+    }
+
+    @else if $-mobile-first {
+      @if $-mob-unit==1vw {
+        $-curr-context: $-mob-size * 0.01px;
+        $var: controller.convertFull($var, $-curr-context);
+      }
+    }
+
+    @else if $-desk-unit==$-big-desk-unit {
+      @if $-big-desk-unit==1vw {
+        $-curr-context: $-big-desk-size * 0.01px;
+        $var: controller.convertFull($var, $-curr-context);
+      }
+    }
+
+    @else {
+      @if $-big-desk-unit==1vw {
+        $-curr-context: $-big-desk-size * 0.01px;
+        $var: controller.convertFull($var, $-curr-context);
+      }
+    }
+
+    $finalValues: append($finalValues, $var);
+  }
+
+  $string: 'minmax(#{nth($finalValues, 1)}, #{nth($finalValues, 2)})';
+  @return unquote($string);
+}
+
+@mixin style($prop: null, $value: null, $important: null, $elem: &) {
+  // @debug 'entrou #{$prop} #{$value}';
+
+  @if $prop==null or $value==null {
+    // @debug 'primeiro';
     @error "faltam valores na funcao testando;";
   }
 
   @if $-active-context and $-active-unit {
-    @include controller.writeProp($prop, $value, $-active-context, $-active-unit);
+    // @debug 'segundo';
+    @include controller.writeProp($prop, $value, $-active-context, $-active-unit, $important);
   }
 
   @else if $-mobile-first {
-    @include controller.writeProp($prop, $value, $-mob-size, $-mob-unit);
+    // @debug 'terceiro';
+    @include controller.writeProp($prop, $value, $-mob-size, $-mob-unit, $important);
   }
 
   @else if $-desk-unit==$-big-desk-unit {
-    @include controller.writeProp($prop, $value, $-big-desk-size, $-big-desk-unit);
+    // @debug 'quarto';
+    @include controller.writeProp($prop, $value, $-big-desk-size, $-big-desk-unit, $important);
   }
 
   @else {
-    @include controller.writeProp($prop, $value, $-big-desk-size, $-big-desk-unit);
+    // @debug 'quinto';
+    @include controller.writeProp($prop, $value, $-big-desk-size, $-big-desk-unit, $important);
 
     @include media('small_desktop') {
-      @include controller.writeProp($prop, $value, $-desk-size, $-desk-unit);
+      @include controller.writeProp($prop, $value, $-desk-size, $-desk-unit, $important);
     }
 
   }
 
-  $-active-context: null !global;
-  $-active-unit: null !global;
+  // $-active-context: null !global;
+  // $-active-unit: null !global;
 }
 
 @mixin calc($prop, $value1, $value2: 100%, $important: false) {
@@ -139,25 +215,76 @@ $-active-unit: null;
 
 }
 
-@mixin multicolor-icon($svg-string: null, $width: null, $height: null, $colors...) {
-  @if $-debugger {
-    @debug 'multicolor-icon disparado';
-    @debug '$svg-string: #{$svg-string}';
-    @debug '$width: #{$width}';
-    @debug '$height: #{$height}';
-    @debug '$colors: #{$colors}';
+@mixin function($function: null, $prop: null, $value: null, $important: null, $elem: &) {
+  // @debug 'entrou #{$prop} #{$value}';
+
+  @if $function==null or $prop==null or $value==null {
+    // @debug 'primeiro';
+    @error "faltam valores na função [function];";
   }
 
-  @if ($svg-string==null or $width==null or $height==null) {
+  @if $-active-context and $-active-unit {
+    // @debug 'segundo';
+    @include controller.writeFunction($function, $prop, $value, $-active-context, $-active-unit, $important);
+  }
+
+  @else if $-mobile-first {
+    // @debug 'terceiro';
+    @include controller.writeFunction($function, $prop, $value, $-mob-size, $-mob-unit, $important);
+  }
+
+  @else if $-desk-unit==$-big-desk-unit {
+    // @debug 'quarto';
+    @include controller.writeFunction($function, $prop, $value, $-big-desk-size, $-big-desk-unit, $important);
+  }
+
+  @else {
+    // @debug 'quinto';
+    @include controller.writeFunction($function, $prop, $value, $-big-desk-size, $-big-desk-unit, $important);
+
+    @include media('small_desktop') {
+      @include controller.writeFunction($function, $prop, $value, $-desk-size, $-desk-unit, $important);
+    }
+
+  }
+
+  // $-active-context: null !global;
+  // $-active-unit: null !global;
+}
+
+@mixin multicolor-icon($svg-string: null, $colors: null, $elem: &) {
+  @if $-debugger {
+    @debug 'multicolor-icon disparado';
+  }
+
+  @if $svg-string==null {
     @error 'You must pass an SVG string, width and height as first parameters, respectively';
   }
 
   $-colors-param-count: list.length($colors);
-  $-colors-string-count: controller.countTerm($svg-string, 'fill:');
+  $-colors-string-count: controller.countTerm($svg-string);
+  $-icon-prefix: 'data:image/svg+xml; utf8,';
+  $-final-string: controller.convertColors($svg-string);
 
-  @if $-colors-param-count !=$colors-string-count {
-    @warn 'You must pass the exactly amount of colors as parameters, respectively. Param Count: #{$-colors-param-count} | String Count: #{$-colors-string-count}';
-    @include controller.applyDefaulColors($svg-string);
+  @if $colors {
+    @if $-colors-param-count==$-colors-string-count {
+      $-final-string: controller.applyCustomColors($svg-string, $colors);
+    }
+
+    @else {
+      @warn '[#{$elem}] You must pass the exactly amount of colors as parameters, respectively. Param Count: #{$-colors-param-count} | SVG Count: #{$-colors-string-count}';
+      $-final-string: controller.applyDefaultColors($svg-string);
+    }
+  }
+
+  $-final-string: $-icon-prefix+$-final-string;
+
+  &:before {
+    content: url($-final-string);
+    display: block;
+    position: relative;
+    width: 100%;
+    height: 100%;
   }
 
 }
@@ -222,4 +349,32 @@ $-active-unit: null;
     $-active-context: $-big-desk-size !global;
     $-active-unit: $-big-desk-unit !global;
   }
+}
+
+@mixin defineActiveContext() {
+  $-new-context: null;
+  $-new-unit: null;
+
+  @if $-active-context and $-active-unit {
+    $-new-context: $-active-context;
+    $-new-unit: $-active-unit;
+  }
+
+  @else if $-mobile-first {
+    $-new-context: $-mob-size;
+    $-new-unit: $-mob-unit;
+  }
+
+  @else if $-desk-unit==$-big-desk-unit {
+    $-new-context: $-big-desk-size;
+    $-new-unit: $-big-desk-unit;
+  }
+
+  @else {
+    $-new-context: $-big-desk-size;
+    $-new-unit: $-big-desk-unit;
+  }
+
+  $-active-context: $-new-context !global;
+  $-active-unit: $-new-unit !global;
 }
