@@ -1,5 +1,6 @@
 @use "sass:list";
 @use "sass:math";
+@use "sass:string";
 
 @function getBreakpoint($list, $condition) {
   @return map-get($list, $condition);
@@ -41,4 +42,42 @@
   }
 
   @return math.div($size, $context * 0.01) *1vw;
+}
+
+@function countTerm($string, $term: 'fill:') {
+  $-position: string.index($string, $term);
+  $-term-length: string.length($term);
+  $-term-length: $term-length -1;
+  $-count: 0;
+
+  @while $-position !=null {
+    $string: string.slice($string, ($-position + $term-length));
+    $-position: string.index($string, $term);
+    $-count: $-count + 1;
+  }
+
+  @return $-count;
+}
+
+@function applyDefaultColors($string, $query: 'fill') {
+  $-query: $query;
+  $-query-length: string.length($-query);
+  $-query-length: $-query-length -1;
+  $-actual-color: getIndex($string, $-query);
+  $-final-string: null;
+
+  @while $-actual-color !=null {
+    $-color-index-init: (string.index($string, $-query) + 4);
+    $-string-before: string.slice($string, 1, $-color-index-init);
+    $-string-after: string.slice($string, $-color-index-init);
+    $-color-index-final: (string.index($-string-after, '/>') - 1);
+    $-string-after: string.slice($-string-after, $-color-index-final);
+
+    $string: $-string-after;
+    $-final-string: $-final-string+$-string-before+'rgb(0,0,0)';
+    $-actual-color: getIndex($string, $-query);
+  }
+
+  $-final-string: $-final-string+'"/>';
+  @return $-final-string;
 }

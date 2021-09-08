@@ -31,6 +31,7 @@ $-breakpoints: ("mobile": "(max-width: #{$-mob-max-width})",
 );
 
 $-mobile-first: false !default;
+$-debugger: false !default;
 $-active-context: null;
 $-active-unit: null;
 
@@ -134,6 +135,29 @@ $-active-unit: null;
     @else {
       #{$prop}: calc(#{$value2} - #{$newSize});
     }
+  }
+
+}
+
+@mixin multicolor-icon($svg-string: null, $width: null, $height: null, $colors...) {
+  @if $-debugger {
+    @debug 'multicolor-icon disparado';
+    @debug '$svg-string: #{$svg-string}';
+    @debug '$width: #{$width}';
+    @debug '$height: #{$height}';
+    @debug '$colors: #{$colors}';
+  }
+
+  @if ($svg-string==null or $width==null or $height==null) {
+    @error 'You must pass an SVG string, width and height as first parameters, respectively';
+  }
+
+  $-colors-param-count: list.length($colors);
+  $-colors-string-count: controller.countTerm($svg-string, 'fill:');
+
+  @if $-colors-param-count !=$colors-string-count {
+    @warn 'You must pass the exactly amount of colors as parameters, respectively. Param Count: #{$-colors-param-count} | String Count: #{$-colors-string-count}';
+    @include controller.applyDefaulColors($svg-string);
   }
 
 }
