@@ -21,5 +21,8 @@
   "bugs": {
     "url": "https://github.com/devthiagocaetano/propVw/issues"
   },
-  "homepage": "https://github.com/devthiagocaetano/propVw#readme"
+  "homepage": "https://github.com/devthiagocaetano/propVw#readme",
+  "devDependencies": {
+    "sass": "^1.62.1"
+  }
 }

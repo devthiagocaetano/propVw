@@ -314,6 +314,10 @@ $-active-unit: null;
   $-big-desk-max-width: $big-desk-max-width !global;
 }
 
+@mixin setMobileFirst($new-mobile-first: null) {
+  $-mobile-first: $new-mobile-first !global;
+}
+
 // HIDDEN FUNCTIONS ON FORWARD
 @mixin setActiveContext($breakpoint: null) {
   @if $breakpoint==null {
